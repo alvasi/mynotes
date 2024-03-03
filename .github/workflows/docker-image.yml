@@ -3,11 +3,31 @@ name: Docker Image CI
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install python-dotenv package
+        run: pip install python-dotenv
+
+      - name: Run DB connection test
+        env: 
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          python -m unittest app_test.py
+
   build:
+    needs: test  # This ensures that build only runs if test is successful
     runs-on: ubuntu-latest
 
     steps:
