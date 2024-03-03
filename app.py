@@ -2,48 +2,40 @@ from flask import Flask, jsonify, request
 import psycopg2 as psycopg
 import os
 from datetime import date
-from dotenv import load_dotenv
 
 app = Flask(__name__)
-
-load_dotenv()
 
 # SQL
 DB_HOST = "db.doc.ic.ac.uk"
 DB_USER = "wss119"
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_NAME = "wss119"
 DB_PORT = "5432"
 
-today = date.today()
-
 
 def get_db_connection():
-    try:
-        connection = psycopg.connect(
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=DB_HOST,
-            port=DB_PORT,
-            database=DB_NAME,
-        )
-        return connection
-    except (Exception, psycopg.Error) as error:
-        print("Error while connecting to PostgreSQL", error)
-        return None
+    server_params = {
+        "dbname": DB_USER,
+        "host": DB_HOST,
+        "port": DB_PORT,
+        "user": DB_USER,
+        "password": DB_PASSWORD,
+        "client_encoding": "utf-8",
+    }
+    return psycopg.connect(**server_params)
 
 
 @app.route("/all_deadlines", methods=["GET"])
 def get_all_deadlines():
     username = request.args.get("username")
     user_deadlines = {"entries": []}
-
     connection = get_db_connection()
     if connection:
         try:
             cursor = connection.cursor()
             cursor.execute("SELECT * FROM deadlines WHERE userid = %s", (username,))
             records = cursor.fetchall()
+            print(records)
             for record in records:
                 record_dict = {
                     "id": record[0],
@@ -56,11 +48,14 @@ def get_all_deadlines():
             print("Error retrieving deadlines: ", error)
         finally:
             connection.close()
+    else:
+        return jsonify("Failed to connect to the database"), 500
     return jsonify(user_deadlines)
 
 
 @app.route("/past_deadlines", methods=["GET"])
 def get_past_deadlines():
+    today = date.today()
     username = request.args.get("username")
     past_deadlines = {"entries": []}
     connection = get_db_connection()
@@ -88,11 +83,14 @@ def get_past_deadlines():
             print("Error retrieving past deadlines: ", error)
         finally:
             connection.close()
+    else:
+        return jsonify("Failed to connect to the database"), 500
     return jsonify(past_deadlines)
 
 
 @app.route("/current_deadlines", methods=["GET"])
 def get_current_deadlines():
+    today = date.today()
     username = request.args.get("username")
     current_deadlines = {"entries": []}
     connection = get_db_connection()
@@ -120,6 +118,8 @@ def get_current_deadlines():
             print("Error retrieving current deadlines: ", error)
         finally:
             connection.close()
+    else:
+        return jsonify("Failed to connect to the database"), 500
     return jsonify(current_deadlines)
 
 
