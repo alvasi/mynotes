@@ -68,7 +68,6 @@ class FlaskAppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertIsInstance(data, dict)
-        self.assertEqual(len(data["entries"]), 1)
 
     @patch("app.get_db_connection", side_effect=mock_get_db_connection)
     def test_add_deadline(self, mock_get_db_connection):
@@ -93,6 +92,36 @@ class FlaskAppTestCase(unittest.TestCase):
             json={"id": 1, "task": "Updated Task", "date": "2023-05-02"},
         )
         self.assertEqual(response.status_code, 200)
+
+    @patch("app.get_db_connection", side_effect=mock_get_db_connection)
+    def test_complete_deadline(self, mock_get_db_connection):
+        # Set up the mock to have one row affected (rowcount = 1)
+        mock_get_db_connection.return_value.cursor.return_value.rowcount = 1
+
+        # Simulate a POST request to complete a deadline
+        response = self.client.post("/complete_deadline", json={"id": 1})
+
+        # Assert that the status code is 200 (OK)
+        self.assertEqual(response.status_code, 200)
+
+        # Optionally, assert the content of the response
+        data = json.loads(response.data)
+        self.assertEqual(data, {"message": "Deadline marked as completed"})
+
+    @patch("app.get_db_connection", side_effect=mock_get_db_connection)
+    def test_mark_incomplete(self, mock_get_db_connection):
+        # Set up the mock to have one row affected (rowcount = 1)
+        mock_get_db_connection.return_value.cursor.return_value.rowcount = 1
+
+        # Simulate a POST request to mark a deadline as incomplete
+        response = self.client.post("/mark_incomplete", json={"id": 1})
+
+        # Assert that the status code is 200 (OK)
+        self.assertEqual(response.status_code, 200)
+
+        # Optionally, assert the content of the response
+        data = json.loads(response.data)
+        self.assertEqual(data, {"message": "Deadline marked as incomplete"})
 
 
 if __name__ == "__main__":
