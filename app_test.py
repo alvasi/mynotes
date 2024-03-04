@@ -35,7 +35,7 @@ class FlaskAppTestCase(unittest.TestCase):
         self.client = app.test_client()
 
     # Example of a mock function to replace the actual database connection
-    def mock_get_db_connection(self):
+    def mock_get_db_connection():
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_conn.cursor.return_value = mock_cursor
