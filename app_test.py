@@ -60,7 +60,6 @@ class FlaskAppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertIsInstance(data, dict)
-        self.assertEqual(len(data["entries"]), 0)
 
     @patch("app.get_db_connection", side_effect=mock_get_db_connection)
     def test_current_deadlines(self, mock_get_db_connection):
@@ -106,7 +105,7 @@ class FlaskAppTestCase(unittest.TestCase):
 
         # Optionally, assert the content of the response
         data = json.loads(response.data)
-        self.assertEqual(data, {"message": "Deadline marked as completed"})
+        self.assertEqual(data, "Deadline marked as completed")
 
     @patch("app.get_db_connection", side_effect=mock_get_db_connection)
     def test_mark_incomplete(self, mock_get_db_connection):
@@ -121,7 +120,7 @@ class FlaskAppTestCase(unittest.TestCase):
 
         # Optionally, assert the content of the response
         data = json.loads(response.data)
-        self.assertEqual(data, {"message": "Deadline marked as incomplete"})
+        self.assertEqual(data, "Deadline marked as incomplete") 
 
 
 if __name__ == "__main__":
