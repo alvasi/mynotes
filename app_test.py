@@ -2,6 +2,7 @@ import unittest
 import psycopg2 as psycopg
 from dotenv import load_dotenv
 from app import app, get_db_connection
+from unittest.mock import patch, MagicMock
 from flask import json
 
 # Load environment variables from .env file
@@ -26,25 +27,71 @@ class TestDatabaseConnection(unittest.TestCase):
                 print("Database connection closed.")
 
 
-class FlaskTestCase(unittest.TestCase):
+class FlaskAppTestCase(unittest.TestCase):
 
-    # This will run before every test
     def setUp(self):
-        # Set up the app to use the testing configuration
+        # Configure the app for testing
         app.config["TESTING"] = True
-        self.app = app.test_client()
+        self.client = app.test_client()
 
-    def test_all_deadlines(self):
-        # Simulate a request to the /all_deadlines endpoint
-        response = self.app.get("/all_deadlines?username=testuser")
+    # Example of a mock function to replace the actual database connection
+    def mock_get_db_connection(self):
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchall.return_value = [
+            (1, "user1", "Task 1", date(2023, 4, 30), False),
+        ]
+        return mock_conn
 
-        # Check if the response is OK
+    # Example test for the /all_deadlines endpoint
+    @patch("app.get_db_connection", side_effect=mock_get_db_connection)
+    def test_all_deadlines(self, mock_get_db_connection):
+        response = self.client.get("/all_deadlines?username=user1")
         self.assertEqual(response.status_code, 200)
-
-        # Optionally, check if the data returned is correct
         data = json.loads(response.data)
         self.assertIsInstance(data, dict)
-        self.assertIn("entries", data)
+        self.assertEqual(len(data["entries"]), 1)  # Assuming one entry returned
+
+    @patch("app.get_db_connection", side_effect=mock_get_db_connection)
+    def test_past_deadlines(self, mock_get_db_connection):
+        response = self.client.get("/past_deadlines?username=user1")
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsInstance(data, dict)
+        self.assertEqual(len(data["entries"]), 0)
+
+    @patch("app.get_db_connection", side_effect=mock_get_db_connection)
+    def test_current_deadlines(self, mock_get_db_connection):
+        response = self.client.get("/current_deadlines?username=user1")
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIsInstance(data, dict)
+        self.assertEqual(len(data["entries"]), 1)
+
+    @patch("app.get_db_connection", side_effect=mock_get_db_connection)
+    def test_add_deadline(self, mock_get_db_connection):
+        mock_get_db_connection.return_value.cursor.return_value.rowcount = 1
+        response = self.client.post(
+            "/add_deadline",
+            json={"username": "user1", "task": "New Task", "deadline": "2023-05-01"},
+        )
+        self.assertEqual(response.status_code, 201)
+
+    @patch("app.get_db_connection", side_effect=mock_get_db_connection)
+    def test_delete_deadline(self, mock_get_db_connection):
+        mock_get_db_connection.return_value.cursor.return_value.rowcount = 1
+        response = self.client.post("/delete_deadline", json={"id": 1})
+        self.assertEqual(response.status_code, 200)
+
+    @patch("app.get_db_connection", side_effect=mock_get_db_connection)
+    def test_update_deadline(self, mock_get_db_connection):
+        mock_get_db_connection.return_value.cursor.return_value.rowcount = 1
+        response = self.client.post(
+            "/update_deadline",
+            json={"id": 1, "task": "Updated Task", "date": "2023-05-02"},
+        )
+        self.assertEqual(response.status_code, 200)
 
 
 if __name__ == "__main__":

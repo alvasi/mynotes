@@ -151,6 +151,77 @@ def add_deadline():
         return jsonify("Failed to connect to the database"), 500
 
 
+@app.route("/delete_deadline", methods=["POST"])
+def delete_deadline():
+    data = request.get_json()
+    deadline_id = data.get("id")
+
+    if not deadline_id:
+        return jsonify("Missing deadline ID"), 400
+
+    connection = get_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor()
+            update_sql = "DELETE FROM deadlines WHERE id = %s"
+            cursor.execute(update_sql, (deadline_id,))
+            connection.commit()
+            return jsonify("Deadline deleted"), 200
+        except (Exception, psycopg.Error) as error:
+            print("Error while updating deadline in PostgreSQL", error)
+            return jsonify("Failed to delete deadline"), 500
+        finally:
+            if connection is not None:
+                connection.close()
+    else:
+        return jsonify("Failed to connect to the database"), 500
+
+
+@app.route("/update_deadline", methods=["POST"])
+def update_deadline():
+    data = request.get_json()
+    deadline_id = data.get("id")
+    new_task = data.get("task")
+    new_date = data.get("date")
+
+    if not deadline_id:
+        return jsonify("Missing deadline ID"), 400
+
+    connection = get_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor()
+            if new_task:
+                update_sql = "UPDATE deadlines SET task = %s WHERE id = %s"
+                cursor.execute(
+                    update_sql,
+                    (
+                        new_task,
+                        deadline_id,
+                    ),
+                )
+                connection.commit()
+            if new_date:
+                update_sql = "UPDATE deadlines SET date = %s WHERE id = %s"
+                cursor.execute(
+                    update_sql,
+                    (
+                        new_date,
+                        deadline_id,
+                    ),
+                )
+                connection.commit()
+            return jsonify("Updated deadline"), 200
+        except (Exception, psycopg.Error) as error:
+            print("Error while updating deadline in PostgreSQL", error)
+            return jsonify("Failed to update deadline"), 500
+        finally:
+            if connection is not None:
+                connection.close()
+    else:
+        return jsonify("Failed to connect to the database"), 500
+
+
 @app.route("/complete_deadline", methods=["POST"])
 def complete_deadline():
     data = request.get_json()
@@ -172,6 +243,34 @@ def complete_deadline():
         except (Exception, psycopg.Error) as error:
             print("Error while updating deadline in PostgreSQL", error)
             return jsonify("Failed to mark deadline as completed"), 500
+        finally:
+            if connection is not None:
+                connection.close()
+    else:
+        return jsonify("Failed to connect to the database"), 500
+
+
+@app.route("/mark_incomplete", methods=["POST"])
+def mark_incomplete():
+    data = request.get_json()
+    deadline_id = data.get("id")
+
+    if not deadline_id:
+        return jsonify("Missing deadline ID"), 400
+
+    connection = get_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor()
+            update_sql = "UPDATE deadlines SET completed = 'false' WHERE id = %s"
+            cursor.execute(update_sql, (deadline_id,))
+            connection.commit()
+            if cursor.rowcount == 0:
+                return jsonify("No such deadline found"), 404
+            return jsonify("Deadline marked as incomplete"), 200
+        except (Exception, psycopg.Error) as error:
+            print("Error while updating deadline in PostgreSQL", error)
+            return jsonify("Failed to mark deadline as incomplete"), 500
         finally:
             if connection is not None:
                 connection.close()
