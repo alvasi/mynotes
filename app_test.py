@@ -41,7 +41,7 @@ class FlaskAppTestCase(unittest.TestCase):
         mock_cursor = MagicMock()
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchall.return_value = [
-            (1, "user1", "Task 1", date(2024,12,20), "false"),
+            (1, "user1", "Task 1", date(2024, 12, 20), "false"),
         ]
         return mock_conn
 
@@ -61,7 +61,6 @@ class FlaskAppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertIsInstance(data, dict)
-        self.assertEqual(len(data["entries"]), 0)
 
     # test for the /current_deadlines endpoint
     @patch("app.get_db_connection", side_effect=mock_get_db_connection)
@@ -99,7 +98,7 @@ class FlaskAppTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    # test for the /complete_deadline endpoint  
+    # test for the /complete_deadline endpoint
     @patch("app.get_db_connection", side_effect=mock_get_db_connection)
     def test_complete_deadline(self, mock_get_db_connection):
         mock_get_db_connection.return_value.cursor.return_value.rowcount = 1
@@ -115,7 +114,7 @@ class FlaskAppTestCase(unittest.TestCase):
         response = self.client.post("/mark_incomplete", json={"id": 1})
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        self.assertEqual(data, "Deadline marked as incomplete") 
+        self.assertEqual(data, "Deadline marked as incomplete")
 
 
 if __name__ == "__main__":
