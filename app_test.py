@@ -41,7 +41,7 @@ class FlaskAppTestCase(unittest.TestCase):
         mock_cursor = MagicMock()
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchall.return_value = [
-            (1, "user1", "Task 1", "2024-05-20", "false"),
+            (1, "user1", "Task 1", date(2024-12-20), "false"),
         ]
         return mock_conn
 
@@ -52,7 +52,7 @@ class FlaskAppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertIsInstance(data, dict)
-        self.assertEqual(len(data["entries"]), 1)  # Assuming one entry returned
+        self.assertEqual(len(data["entries"]), 1)  # Assume one entry returned
 
     # test for the /past_deadlines endpoint
     @patch("app.get_db_connection", side_effect=mock_get_db_connection)
