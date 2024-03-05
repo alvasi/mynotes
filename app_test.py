@@ -41,7 +41,7 @@ class FlaskAppTestCase(unittest.TestCase):
         mock_cursor = MagicMock()
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchall.return_value = [
-            (1, "user1", "Task 1", date(2023, 4, 30), "false"),
+            (1, "user1", "Task 1", "2024-05-20", "false"),
         ]
         return mock_conn
 
