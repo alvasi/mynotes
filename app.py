@@ -9,8 +9,11 @@ app = Flask(__name__)
 DB_HOST = "db.doc.ic.ac.uk"
 DB_USER = "wss119"
 DB_PASSWORD = os.environ.get("DB_PASSWORD")
-DB_NAME = "wss119"
 DB_PORT = "5432"
+
+# SQL USER
+DB_USER_2 = "sf23"
+DB_PASSWORD_2 = os.environ.get("DB_PASSWORD_2")
 
 
 def get_db_connection():
@@ -20,6 +23,18 @@ def get_db_connection():
         "port": DB_PORT,
         "user": DB_USER,
         "password": DB_PASSWORD,
+        "client_encoding": "utf-8",
+    }
+    return psycopg.connect(**server_params)
+
+
+def get_user_db_connection():
+    server_params = {
+        "dbname": DB_USER_2,
+        "host": DB_HOST,
+        "port": DB_PORT,
+        "user": DB_USER_2,
+        "password": DB_PASSWORD_2,
         "client_encoding": "utf-8",
     }
     return psycopg.connect(**server_params)
@@ -276,6 +291,57 @@ def mark_incomplete():
                 connection.close()
     else:
         return jsonify("Failed to connect to the database"), 500
+
+
+@app.route("/clean_database", methods=["POST"])
+def clean_database():
+    # Connect to the user database to get valid userids
+    connection_user = get_user_db_connection()
+    valid_userids = []
+    if connection_user:
+        try:
+            cursor_user = connection_user.cursor()
+            cursor_user.execute("SELECT DISTINCT userid FROM notes_user_2")
+            valid_userids_results = cursor_user.fetchall()
+            valid_userids = [userid[0] for userid in valid_userids_results]
+        except (Exception, psycopg.Error) as error:
+            print("Error fetching userids from user database:", error)
+            return jsonify("Failed to fetch userids from user database"), 500
+        finally:
+            cursor_user.close()
+            connection_user.close()
+
+    # If no valid userids are found, there's nothing to clean
+    if not valid_userids:
+        return jsonify("No userids found. No cleanup needed."), 200
+
+    # Connect to the main database to delete deadlines not associated with valid userids
+    connection = get_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor()
+            format_strings = ",".join(["%s"] * len(valid_userids))
+            # Delete deadlines where userid is not in the list of valid userids
+            cursor.execute(
+                f"DELETE FROM deadlines WHERE userid NOT IN ({format_strings})",
+                tuple(valid_userids),
+            )
+            connection.commit()
+            deleted_rows = cursor.rowcount
+            return (
+                jsonify(
+                    f"Cleaned up {deleted_rows} deadlines not linked to a valid user."
+                ),
+                200,
+            )
+        except (Exception, psycopg.Error) as error:
+            print("Error while cleaning deadlines from main database:", error)
+            return jsonify("Failed to clean deadlines from main database"), 500
+        finally:
+            cursor.close()
+            connection.close()
+    else:
+        return jsonify("Failed to connect to the main database"), 500
 
 
 if __name__ == "__main__":
