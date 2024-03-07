@@ -87,14 +87,16 @@ jobs:
         uses: 'azure/aci-deploy@v1'
         with:
           resource-group: sse_group
-          dns-name-label: deadlines-api
+          dns-name-label: deadline-api
           image: ghcr.io/alvasi/deadline-api:latest
           registry-login-server: ghcr.io
           registry-username: alvasi
           registry-password: ${{ secrets.DEADLINE_TOKEN }}
-          secure-environment-variables: DB_PASSWORD=${{ secrets.DB_PASSWORD }} DB_PASSWORD_2={{ secrets.DB_PASSWORD_2 }}
+          secure-environment-variables: 
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }} 
+          DB_PASSWORD_2: ${{ secrets.DB_PASSWORD_2 }}
 
-          name: deadlines-api
+          name: deadline-api
           location: 'UK South'
 
   # build_to_azurecr:
