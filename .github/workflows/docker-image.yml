@@ -95,6 +95,7 @@ jobs:
           secure-environment-variables: DB_PASSWORD=${{ secrets.DB_PASSWORD }} DB_PASSWORD_2=${{ secrets.DB_PASSWORD_2 }}
           name: deadline-api
           location: 'UK South'
+          container-ports: 5000
 
   # build_to_azurecr:
   #   needs: db_connection_unit_tests
