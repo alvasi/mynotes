@@ -3,6 +3,7 @@ name: Docker Image CI
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   python-formatting:
@@ -71,7 +72,7 @@ jobs:
           tags: ghcr.io/alvasi/deadline-api:latest
           platforms: linux/amd64
 
-  deploy-to-aci:
+  deploy_to_aci:
     # if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     needs: build_to_ghcr
