@@ -96,7 +96,7 @@ jobs:
           location: 'UK South'
 
   # build_to_azurecr:
-  #   needs: db_connection_unit_tests  # build only runs if test is successful
+  #   needs: db_connection_unit_tests
   #   runs-on: ubuntu-latest
 
   #   steps:
