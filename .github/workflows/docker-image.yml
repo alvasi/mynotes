@@ -43,6 +43,7 @@ jobs:
       - name: Run DB connection test
         env: 
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_PASSWORD_2: ${{ secrets.DB_PASSWORD_2 }}
         run: |
           python -m unittest app_test.py
 
@@ -86,13 +87,14 @@ jobs:
         uses: 'azure/aci-deploy@v1'
         with:
           resource-group: sse_group
-          dns-name-label: deadline-api
+          dns-name-label: deadlines-api
           image: ghcr.io/alvasi/deadline-api:latest
           registry-login-server: ghcr.io
           registry-username: alvasi
           registry-password: ${{ secrets.DEADLINE_TOKEN }}
-          secure-environment-variables: DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          name: deadline-api
+          secure-environment-variables: DB_PASSWORD=${{ secrets.DB_PASSWORD }} DB_PASSWORD_2={{ secrets.DB_PASSWORD_2 }}
+
+          name: deadlines-api
           location: 'UK South'
 
   # build_to_azurecr:
